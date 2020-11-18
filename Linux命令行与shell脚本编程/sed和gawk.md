@@ -163,3 +163,117 @@ s/pattern/replacement/flags
 (2) g，表明新文本将会替换所有匹配的文本；
 (3) p，表明原先行的内容要打印出来；
 (4) w file，将替换的结果写到文件中；
+`p`替换标记会打印与替换命令中指定的模式匹配的行，通常会和`-n`选项一起使用，`-n`选项将禁止sed编辑器输出，但`p`替换标记会输出修改过的行，将二者配合使用的效果就是只输出被替换命令修改过的行
+
+2. 替换字符
+
+在文本字符串中遇到一些不太方便在替换模式中使用的字符，由于正斜线通常用作字符串分隔符，所以如果它出现在模式文本中的话，必须用反斜线来转义
+```bash
+sed 's/\/bin\/bash/\/bin\/csh/' /etc/passwd
+```
+sed编辑器允许选择其他字符来作为替换命令中的字符串分隔符
+```bash
+sed 's!/bin/bash!/bin/csh!' /etc/passwd
+```
+## 使用地址
+默认情况下，在sed编辑器中使用的命令会作用于文本数据的所有行。如果只想将命令作用于特定行或某些行，则必须用行寻址
+(1)以数字形式表示行区间
+(2)用文本模式来过滤出行
+```bash
+[address]command
+
+address{
+    command1
+    command2
+    command3
+}
+```
+sed编辑器会将指定的每条命令作用到匹配指定地址的行上
+1. 数字方式的行寻址
+
+当使用数字方式的行寻址时，可以用行在文本流中的行位置来引用。sed编辑器会将文本流中的第一行编号为1，然后继续按顺序为接下来的行分配行号
+在命令中指定的地址可以是单个行号，或是用起始行号、逗号以及结尾行号指定的一定区间范围内的行
+```bash
+sed '2s/dog/cat/' data1.txt
+sed '2,3s/dog/cat/' data1.txt
+sed '2,$s/dog/cat/' data1.txt #使用美元符表示到文件末尾
+```
+2. 使用文本模式过滤器
+
+sed编辑器允许指定文本模式来过滤出命令要作用的行
+```
+/pattern/command
+```
+```bash
+grep Samantha /etc/passwd
+# output
+# Samantha:x:502:502::/home/Samantha:/bin/bash
+sed '/Samantha/s/bash/csh/' /etc/passwd
+# output
+# Samantha:x:502:502::/home/Samantha:/bin/csh
+```
+该命令只作用到匹配文本模式的行上。虽然使用固定文本模式能帮你过滤出特定的值，但其作用难免有限，sed编辑器在文本模式中采用了一种称为正则表达式的特性来帮助你创建匹配效果更好的模式
+3. 命令组合
+
+需要在单行上执行多条命令，可以用花括号将多条命令组合在一起
+```bash
+sed '2{s/fox/elephant s/dog/cat}' data1.txt
+```
+## 删除行
+`d`会删除匹配指定寻址模式的所有行，使用该命令时，如果忘记加入寻址模式的话，流中的所有文本行都会被删除
+```bash
+sed 'd' data1.txt # 删除所有文本行
+sed '3d' data6.txt
+sed '2,3d' data6.txt
+sed '3,$d' data6.txt
+sed `/number 1/d` data6.txt
+```
+也可以使用两个文本模式来删除某个区间内的行，指定的第一个模式会"打开"行删除功能，第二个模式会"关闭"行删除功能
+```bash
+sed '/1/,/3/d' data6.txt
+```
+特别小心，只要sed编辑器在数据流中匹配到了开始模式，删除功能就会打开
+## 插入和附加文本
+(1)插入(insert)命令(`i`)会在指定行前增加一个新行
+(2)附加(append)命令(`a`)会在指定行后增加一个新行
+它们不能在单个命令行上使用，必须指定是要将行插入还是附加到另一行
+```bash
+sed '[address]command\new line'
+```
+`new line`中的文本将会出现在sed编辑器输出中你指定的位置
+当使用插入命令时，文本会出现在数据流文本的前面
+```bash
+echo "Test line 2" | sed 'i\Test Line 1'
+# output
+# Test line 1
+# Test line 2
+```
+使用附加命令，文本会出现在数据流文本的后面
+```bash
+echo "Test Line 2" | sed 'a\Test Line 1'
+# output
+# Test Line 2
+# Test Line 1
+```
+```bash
+sed '3i\This is an inserted line.' data6.txt
+sed '3a\This is an append line.' data6.txt
+sed '$a\This is a new line of text.' data6.txt
+sed '1i\This is one line of new text.\This is another line of new text.' data6.txt
+```
+## 修改行
+修改(change)命令(`c`)允许修改数据流中整行文本的内容
+```bash
+sed '3c\This is a changed line of text.' data6.txt
+sed '/number 3/c\This is a changed line of text.' data6.txt
+sed '/number 1/c\This is a changed line of text.' data8.txt
+sed '2,3c\This is a new line of text.' data6.txt
+```
+## 转换命令
+转换(transform)命令(`y`)是唯一可以处理单个字符的sed编辑器命令
+```bash
+[address]y/inchars/outchars/
+```
+转换命令会对inchars和outchars值进行一对一的映射，inchars中的第一个字符会被转换为outchars中的第一个字符，第二个字符会被转换为outchars的第二个字符，依次类推；如果inchars和outchars的长度不同，则sed编辑器会产生一条错误信息
+
+
