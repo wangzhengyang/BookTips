@@ -275,5 +275,61 @@ sed '2,3c\This is a new line of text.' data6.txt
 [address]y/inchars/outchars/
 ```
 转换命令会对inchars和outchars值进行一对一的映射，inchars中的第一个字符会被转换为outchars中的第一个字符，第二个字符会被转换为outchars的第二个字符，依次类推；如果inchars和outchars的长度不同，则sed编辑器会产生一条错误信息
-
-
+```bash
+sed 'y/123/789/' data8.txt
+```
+转换命令是一个全局命令，它会将文本中找到的所有指定字符自动进行转换，而不考虑它们出现的位置
+## 回顾打印
+### 打印行
+`p`命令通常用来打印包含匹配文本模式的行
+在命令行上用`-n`选项，禁止输出其他行，只打印包含匹配文本模式的行
+也可以快速打印数据流中的某些行
+```bash
+sed -n '/number 3/p' data6.txt
+sed -n '2,3p' data6.txt
+```
+可以创建一个脚本在修改行之前显示该行
+```bash
+sed -n '/3/{p s/line/test/p}' data6.txt
+```
+### 打印行号
+等号(=)命令会打印行在数据流中的当前行号，行号由数据流中的换行符决定
+```bash
+sed '=' data1.txt
+```
+在数据流中查找特定文本模式
+```bash
+sed -n '/number 4/{= p}' data6.txt
+```
+### 列出行
+列出(list)命令(l)可以打印数据流中的文本和不可打印的ASCII字符
+```bash
+sed -n 'l' data10.txt
+```
+## 使用`sed`处理文件
+### 写入文件
+`w`命令用来向文件写入行
+格式：
+```bash
+[address]w filename
+```
+```bash
+sed '1,2w test.txt' data6.txt
+```
+```bash
+sed -n '/Browncoat/w Browncoats.txt' data11.txt
+```
+### 从文件读取数据
+读取(read)命令(r)允许将一个独立文件中的数据插入到数据流中
+格式:
+```bash
+[address]r filename
+```
+```bash
+sed '3r data12.txt' data6.txt
+sed '/number 2/r data12.txt' data6.txt
+```
+通过占位文本LIST来放入任务名单的位置
+```bash
+sed '/LIST/{r data1.txt d}' notice.std
+```
