@@ -48,3 +48,124 @@ sed -n '/first/{h ; p ; n ; p ; g ; p}' data2.txt
 ```bash
 sed -n '/header/!p' data.txt
 ```
+```bash
+sed '$!N ; s/System\nAdminstrator/Desktop\nUser/  ; s/System Adminstrator/Desktop User/' data4.txt
+```
+```bash
+sed -n '{1!G ; h ; $p}' data2.txt 
+```
+# 改变流
+## 分支
+格式
+```
+[address]b [label]
+```
+`address`参数决定哪些行的数据会触发分支命令；`label`参数定义要跳转到的位置，如果没有加`label`参数，跳转命令会跳转到脚本的结尾
+```bash
+sed '{2,3b ; s/This is/Is this/ ; s/line./test?/}' data2.txt
+```
+要是不想直接跳到脚本的结尾，可以为分支命令定义一个要跳转到的标签，标签以冒号开始，最大可以是7个字符长度
+```bash
+sed '{/first/b jump1 ; s/This is the/No jump on/ ; :jump1 ; s/This is the/Jump here on/}' data.txt
+```
+循环查找
+```bash
+echo "This, is, a, test, to, remove, commas." | sed '{:start ; s/,//1p ; /,/b start}'
+```
+## 测试
+格式
+```
+[address]t [label]
+```
+跟分支命令一样，在没有指定标签的情况下，如果测试成功，sed会跳转到脚本的结尾
+```bash
+sed '{s/first/matched/ ; t ; s/This is the/No match on/}' data.txt
+```
+如果替换命令成功匹配并替换了一个模式，测试命令就会跳转到指定的标签；如果替换命令未能匹配指定的模式，测试命令就不会跳转
+```bash
+echo "This, is, a, test, to, remove, commas." | sed '{:start ; s/,//1p ; t start}'
+```
+# 模式替换
+在使用通配符时，很难知道到底哪些文本会匹配模式
+## `&`符号
+`&`符号可以用来代表替换命令中的匹配的模式。不管模式匹配的是什么样的文本，都可以在替代模式中使用`&`符号来使用这段文本
+```bash
+echo "This cat sleeps in his hat." | sed 's/.at/"&"/g'
+```
+## 替换单独的单词
+用圆括号定义替换模式中的子模式，可以在替换模式中使用特殊字符来引用每个子模式；替代符号由反斜线和数字组成，数字表明子模式的位置，sed编辑器会给第一个子模式分配字符\1，给第二个子模式分配字符\2，以此类推
+```bash
+echo "The System Administrator manual" | sed 's/\(System\) Adminstrator/\1 User'
+```
+```bash
+echo "1234567" | sed '{:start ; s/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/; t start}'
+```
+# 脚本中使用`sed`
+## 使用包装脚本
+将sed编辑器命令放到shell包装脚本(wrapper)中，不用每次使用时都重新键入整个脚本，包装脚本充当着sed编辑器脚本和命令行之间的中间人角色
+```bash
+#!/bin/bash
+sed -n '{1!G ; h ; $p}' $1
+```
+## 重定向`sed`输出
+默认情况下，sed编辑器会将脚本的结果输出到STDOUT上，可以在脚本中用$()将sed编辑器的输出重定向到一个变量中，以备后用
+```bash
+#!/bin/bash
+factorial=1
+counter=1
+number=$1
+while [ $counter -le $number ]
+do
+    factorial=$[ $factorial * $counter ]
+    counter=$[ $counter + 1 ]
+done
+result=$(echo $factorial | sed '{:start ; s/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/ ; t start}')
+```
+# `sed`实用工具
+## 加倍行间距
+```bash
+sed 'G' data.txt
+```
+这个脚本在数据流的最后一行后面也会添加一个空白行，使得文件的末尾也产生一个空白行，可以用排查符号(`!`)和尾行符号(`$`)来确保脚本不会将空白行加到数据流的最后一行后面
+```bash
+sed '$!G' data.txt
+```
+## 对可能含有空白行的文件加倍行间距
+```bash
+sed '/^$/d ; $!G' data.txt
+```
+## 给文件中的行编号
+```bash
+sed '=' data.txt
+```
+```bash
+sed '=' data2.txt | sed '{N ; s/\n/ /}'
+```
+## 打印末尾行
+```bash
+sed '$p' data.txt
+```
+只显示最后10行
+```bash
+sed '{:start ; $q ; N ; 11,$D ; b start}' data.txt
+```
+## 删除行
+1. 删除连续的空白行
+   
+```bash
+sed '/./,/^$/!d' data.txt
+```
+2. 删除开头的空白行
+
+```bash
+sed '/./,$!d' data.txt
+```
+3. 删除结尾的空白行
+
+```bash
+sed '{:start ; /^\n*/{$d ; N ; b start}}'
+```
+## 删除HTML标签
+```bash
+sed 's/<[^>]*>//g' data.txt
+```
