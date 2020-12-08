@@ -148,8 +148,32 @@ vector<int> SubVec(int_arr + 1, int_arr + 4);
 c++程序应当尽量使用`vector`和迭代器，避免使用内置数组和指针，应该尽量使用`string`，避免使用C风格的基于数组的字符串
 
 # 多维数组
+## 使用范围for处理多维数组
+```c++
+for (auto &row : ia)
+{
+    for (auto &col : row)
+    {
+        //...可以改变数组元素
+    }
+}
 
+for (const auto &row : ia)
+{
+    for (auto col : row)
+    {
+        //...不可改变数组元素
+    }
+}
 
+for (auto p = begin(ia); p != end(ia); ++p)
+{
+    for (auto q = begin(*p); q != end(*p); ++q)
+    {
+        //...
+    }
+}
+```
 
 
 
