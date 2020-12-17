@@ -262,3 +262,82 @@
 |否|是|否|是|b2,e2|
 |否|是|否|是|初始化列表|
 ## `string`搜索操作
+每个搜索操作返回一个`string::size_type`值，表示匹配发生位置的下标，如果搜索失败，则返回一个名为`string::npos`的static成员，标准库将`npos`定义为一个`const string::size_type`类型，并初始化为值-1
+|操作|描述|
+|-|-|
+|s.find(args)|查找s中args第一次出现的位置|
+|s.rfind(args)|查找s中args最后一次出现的位置|
+|s.find_first_of(args)|在s中查找args中任何一个字符第一次出现的位置|
+|s.find_last_of(args)|在s中查找args中任何一个字符最后一次出现的位置|
+|s.find_first_not_of(args)|在s中查找第一个不在args中的字符|
+|s.find_last_not_of(args)|在s中查找最后一个不在args中的字符|
+
+搜索操作返回指定字符出现的下标，如果未找到则返回`npos`
+|`args`形式|描述|
+|-|-|
+|c,pos|从s中位置pos开始查找字符c，pos默认为0|
+|s2,pos|从s中位置pos开始查找字符串s2，pos默认为0|
+|cp,pos|从s中位置pos开始查找指针cp指向的以空字符结尾的C风格字符串，pos默认为0|
+|cp,pos,n|从s中位置pos开始查找指针cp指向的数组的前n个字符，pos和n无默认值|
+
+## `compare`函数
+`string`头文件
+根据s是等于、大于还是小于参数指定的字符串，`s.compare(args)`返回0、正数或负数
+|参数形式|描述|
+|-|-|
+|s2|比较s和s2|
+|pos1,n1,s2|将s中从pos1开始的n1个字符与s2进行比较|
+|pos1,n1,s2,pos2,n2|将s中从pos1开始的n1个字符与s2中从pos2开始的n2个字符进行比较|
+|cp|比较s与cp指向的以空字符结尾的字符数组|
+|pos1,n1,cp|将s中从pos1开始的n1个字符与cp指向的以空字符结尾的字符数组进行比较|
+|pos1,n1,cp,n2|将s中从pos1开始的n1个字符与指针cp指向的地址开始的n2个字符进行比较|
+
+## 数值转换
+如果`string`不能转换为一个数值，函数抛出`invalid_argument`异常，如果转换得到的数值无法用任何类型表示，抛出`out_of_range`异常
+|转换|描述|
+|-|-|
+|to_string(val)|一组重载函数，返回数值`val`的`string`表示，`val`可以是任何算术类型，对每个浮点类型和`int`或更大的整型，都有相应版本的`to_string`，与往常一样，小整型会被提升|
+|stoi(s,p,b) stol(s,p,b) stoul(s,p,b) stoll(s,p,b) stoull(s,p,b)|返回s的起始子串(表示整数内容)的数值，返回类型分别是int、long、unsigned long、long long、unsigned long long。b表示转换所用的基数，默认值为10，p是size_t指针，用来保存s中第一个非数值字符的下标，p默认为0，即，函数不保存下标|
+|stof(s,p) stod(s,p) stold(s,p)|返回s的起始子串(表示浮点数内容)的数值，返回值类型分别是float、double或long double，参数p的作用与整数转换函数中一样|
+
+# 容器适配器
+三个顺序容器适配器：`stack`、`queue`和`priority_queue`
+|所有容器适配器支持操作和类型|描述|
+|-|-|
+|size_type|一种类型，足以保存当前类型的最大对象的大小|
+|value_type|元素类型|
+|container_type|实现适配器的底层容器类型|
+|A a;|创建一个名为a的空适配器|
+|A a(c);|创建一个名为a的适配器，带有容器c的一个拷贝|
+|关系运算符|每个适配器都支持所有关系运算符：==、!=、<、<=、>和>= 这些运算符返回底层容器的比较结果|
+|a.empty()|若a包含任何元素，返回false，否则返回true|
+|a.size()|返回a中的元素数目|
+|swap(a,b) a.swap(b)|交换a和b的内容，a和b必须有相同类型，包括底层容器类型也必须相同|
+
+## 定义一个适配器
+默认情况下，`stack`和`queue`是基于`deque`实现的，`priority_queue`是在`vector`之上实现的，可以在创建一个适配器时将一个命名的顺序容器作为第二个类型参数来重载默认容器类型
+
+## 栈适配器
+`stack`头文件
+|栈操作|描述|
+|-|-|
+|s.pop()|删除栈顶元素，但不返回该元素值|
+|s.push(item) s.emplace(args)|创建一个新元素压入栈顶，该元素通过拷贝或移动item而来，或者由args构造|
+|s.top()|返回栈顶元素，但不将元素弹出栈|
+
+栈默认基于`deque`实现，也可以在`list`或`vector`之上实现
+
+## 队列适配器
+`queue`和`priority_queue`定义在`queue`头文件
+|队列操作|描述|
+|-|-|
+|q.pop()|返回queue的首元素或priority_queue的最高优先级的元素，但不删除它们|
+|q.front()|返回首元素，但不删除此元素|
+|q.back()|返回尾元素，只适用于`queue`|
+|q.top()|返回最高优先级元素，但不能删除该元素 只适用于`priority_queue`|
+|q.push(item) q.emplace(args)|在`queue`末尾或`priority_queue`中恰当的位置创建一个元素，其值为item，或者由args构造|
+
+`queue`使用一种先进先出(first-in,first-out,FIFO)的存储和访问策略，进入队列的对象被放置到队尾，而离开队列的对象则从对首删除
+
+`priority_queue`允许为队列中的元素建立优先级，新加入的元素会排在所有优先级比它低的已有元素之前，默认情况下，在元素类型上使用<运算符来确定相对优先级
+
