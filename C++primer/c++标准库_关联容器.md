@@ -102,3 +102,68 @@
 
 ## 添加元素
 对一个`map`进行`insert`操作时，必须记住元素类型是`pair`
+|`insert`操作|描述|
+|-|-|
+|c.insert(v)|v是value_type类型的对象；args用来构造一个元素|
+|c.emplace(args)|对于map和set，只有当元素的关键字不在c中时才插入(或构造)元素，函数返回一个pair，包含一个迭代器，指向具有指定关键字的元素，以及一个指示插入是否成功的bool值|
+|c.insert(b,e) c.insert(il)|b和e是迭代器，表示一个c::value_type类型的范围；il是这种值的花括号列表，函数返回void 对于map和set，只插入关键字不在c中的元素，对于multimap和multiset，则会插入范围内的每个元素|
+|c.insert(p,v) c.emplace(p,args)|类似insert(v)(或emplace(args))，但将迭代器p作为一个提示，指出从哪里开始搜索新元素应该存储的位置，返回一个迭代器，指向具有给定关键字的元素|
+
+### `insert`返回值
+对于不包含重复关键字的容器，添加单一元素的`insert`和`emplace`版本返回一个`pair`，`pair`的`first`成员是一个迭代器，指向具有给定关键字的元素，`second`成员是一个`bool`，指出元素是否插入成功还是已经存在于容器中
+
+## 删除元素
+|删除|描述|
+|-|-|
+|c.erase(k)|从c中删除每个关键字为k的元素，返回一个size_type值，指出删除的元素的数量|
+|c.erase(p)|从c中删除迭代器p指定的元素，p必须指向c中一个真实元素，不能等到c.end()，返回一个指向p之后元素的迭代器，若p指向c中的尾元素，则返回c.end()|
+|c.erase(b,e)|删除迭代器对b和e所表示的范围中的元素,返回e|
+
+## `map`下标操作
+`map`和`unordered_map`容器提供了下标运算符和一个对应的`at`函数，不能对`multimap`和`unordered_multimap`进行下标操作，因为这些容器中可能有多个值与一个关键字相关联
+
+如果关键字并不在`map`中，会为它创建一个元素并插入到`map`找那个，关联值将进行值初始化
+
+|下标操作|描述|
+|-|-|
+|c[k]|返回关键字为k的元素；如果k不在c中，添加一个关键字为k的元素，对其进行值初始化|
+|c.at[k]|访问关键字为k的元素，带参数检查；若k不在c中，抛出一个out_of_range异常|
+
+## 访问元素
+|查找操作|描述|
+|-|-|
+|c.find(k)|返回一个迭代器，指向第一个关键字为k的元素，若k不在容器中，则返回尾后迭代器|
+|c.count(k)|返回关键字等于k的元素的数量，对于不允许重复关键字的容器，返回值永远是0或1|
+|c.lower_bound(k)|返回一个迭代器，指向第一个关键字不小于k的元素|
+|c.uppper_bound(k)|返回一个迭代器，指向第一个关键字大于k的元素|
+|c.equal_range(k)|返回一个迭代器pair，表示关键字等于k的元素的范围，若k不存在，pair的两个成员均等于c.end()|
+
+# 无序容器
+4个无序关联容器不是使用比较运算符来组织元素，而是使用一个哈希函数和关键字类型的==运算符
+
+如果关键字类型固有就是无序的，或者性能测试发现问题可以用哈希技术解决，就可以使用无序容器
+
+## 管理桶
+无序容器在存储上组织为一组桶，每个桶保存零个或多个元素，无序容器使用一个哈希函数将元素映射到桶
+
+|桶接口|描述|
+|-|-|
+|c.bucket_count()|正在使用的桶的数目|
+|c.max_bucket_count()|容器能容纳的最多的桶的数量|
+|c.bucket_size(n)|第n个桶中有多少个元素|
+|c.bucket(k)|关键字为k的元素在哪个桶中|
+
+|桶迭代|描述|
+|-|-|
+|local_iterator|可以用来访问桶中元素的迭代器类型|
+|const_local_iterator|桶迭代器的const版本|
+|c.begin(n),c.end(n)|桶n的首元素迭代器和尾后迭代器|
+|c.cbegin(n),c.end(n)|与前两个函数类似，但返回cosnt_local_iterator|
+
+|哈希策略|描述|
+|-|-|
+|c.load_factor()|每个桶的平均元素数量，返回float值|
+|c.max_load_factor()|c试图维护的平均桶大小，返回float值，c会在需要时添加新的桶，以使得load_factor<=max_load_factor|
+|c.rehash()|重组存储，使得bucket_count>=n且bucket_cout>size/max_load_factor|
+|c.reserve(n)|重组存储，使得c可以保存n个元素且不必rehash|
+
