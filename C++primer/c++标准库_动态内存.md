@@ -79,3 +79,57 @@
 |u.reset() u.reset(q) u.rest(nullptr)|释放u指向的对象,如果提供了内置指针q，令u指向这个对象；否则将u置为空|
 
 ## `weak_ptr`
+一种不控制所指向对象生存期的智能指针，它指向由一个`shared_ptr`管理的对象，将一个`weak_ptr`绑定到一个`shared_ptr`不会改变`shared_ptr`的引用计数，一旦最后一个指向对象的`shared_ptr`被销毁，对象就会被释放
+|操作|描述|
+|-|-|
+|weak_ptr\<T> w|空weak_ptr可以指向类型为T的对象|
+|weak_ptr\<T> w(sp)|与shared_ptr sp指向相同对象的weak_ptr，T必须能转换为sp指向的类型|
+|w = p|p可以是一个shared_ptr或一个weak_ptr，赋值后w与p共享对象|
+|w.reset()|将w值为空|
+|w.use_count()|与w共享对象的shared_ptr的数量|
+|w.expired()|若w.use_count()为0，返回true，否则返回false|
+|w.lock()|如果expired为true，返回一个空shared_ptr；否则返回一个指向w的对象的shared_ptr|
+
+# 动态数组
+
+大多数应用应该使用标准库容器而不是动态分配的数组，使用容器更为简单，更不容易出现内存管理错误并且可能有更好的性能
+
+## `new`和数组
+使用`new T[num]`分配内存
+使用`delete []`释放动态数组
+
+## 使用`unique_ptr`管理动态数组
+|操作|描述|
+|-|-|
+|unique_ptr<T[]> u|u可以指向一个动态分配的数组，数组元素类型为T|
+|unique_ptr<T[]> u(p)|u指向内置指针p所指向的动态分配的数组，p必须能转换为类型T*|
+|u[i]|返回u拥有的数组中位置i处的对象(u必须指向一个数组)|
+
+指向数组的`unique_ptr`不支持成员访问运算符(点和箭头运算符)，其他`unique_ptr`操作不变
+
+## `allocator`类
+
+`new`有一些灵活性上的局限，其中一方面表现在它将内存分配和对象构造组合在了一起，类似的，`delete`将对象析构和内存释放组合在一起
+
+`memory`头文件
+|操作|描述|
+|-|-|
+|allocator\<T> a|定义一个名为a的allocator对象，它可以为类型为T的对象分配内存|
+|a.allocate(n)|分配一段原始的、未构造的内存，保存n个类型为T的对象|
+|a.deallocate(p,n)|释放从T*指针p中地址开始的内存，这块内存保存了n个类型为T的对象；p必须是一个先前由allocate返回的指针，且n必须是p创建时所要求的大小，在调用deallocate之前，用户必须对每个在这块内存中创建的对象调用destroy|
+|a.construct(p,args)|p必须是一个类型为T*的指针，指向一块原始内存；arg被传递给类型为T的构造函数，用来在p指向的内存中构造一个对象|
+|a.destroy(p)|p为T*类型的指针，此算法对p指向的对象执行析构函数|
+
+为了使用`allocate`返回的内存，必须用`construct`构造对象，使用未构造的内存，其行为是未定义的
+
+只能对构造过的元素进行`destroy`操作
+
+|`allocator`算法|描述|
+|-|-|
+|uninitialized_copy(b,e,b2)|从迭代器b和e指出的输入范围中拷贝元素到迭代器b2指定的未构造的原始内存中，b2指向的内存必须足够大，能容纳输入序列中元素的拷贝|
+|uninitialized_copy_n(b,n,b2)|从迭代器b指向的元素开始，拷贝n个元素到b2开始的内存中|
+|uninitialized_fill(b,e,t)|在迭代器b和e指定的原始内存范围中创建对象，对象的值均为t的拷贝|
+|uninitialized_fill_n(b,n,t)|从迭代器b指向的内存地址开始创建n个对象，b必须指向足够大的未构造的原始内存，能够容纳给定数量的对象|
+
+
+
